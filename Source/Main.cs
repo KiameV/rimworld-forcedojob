@@ -21,24 +21,24 @@ namespace ForceDoJob
     [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
     static class Patch_FloatMenuMakerMap_ChoicesAtFor
     {
-        static void Prefix(Pawn pawn, ref Dictionary<WorkTypeDef, int> __state)
+        static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
         {
-            __state = new Dictionary<WorkTypeDef, int>();
+            __state = new List<Pair<WorkTypeDef, int>>();
             foreach (WorkTypeDef def in DefDatabase<WorkTypeDef>.AllDefsListForReading)
             {
                 if (!pawn.story.WorkTypeIsDisabled(def))
                 {
-                    __state.Add(def, pawn.workSettings.GetPriority(def));
+                    __state.Add(new Pair<WorkTypeDef, int> (def, pawn.workSettings.GetPriority(def)));
                     pawn.workSettings.SetPriority(def, 3);
 
                 }
             }
         }
-        static void Postfix(Pawn pawn, ref Dictionary<WorkTypeDef, int> __state)
+        static void Postfix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
         {
-            foreach (KeyValuePair<WorkTypeDef, int> kv in __state)
+            foreach (Pair<WorkTypeDef, int> p in __state)
             {
-                pawn.workSettings.SetPriority(kv.Key, kv.Value);
+                pawn.workSettings.SetPriority(p.First, p.Second);
             }
             __state.Clear();
         }
