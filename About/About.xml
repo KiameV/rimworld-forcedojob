@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+	<ModMetaData>
+		<name>Force Do Job</name>
+		<author>Kiame Vivacity</author>
+		<targetVersion>0.17.1546</targetVersion>
+		<description>Want a pawn, who's not assigned to hauling, to haul something without having to manually change the assignments for the pawn?
+		
+Force them to with this mod!
+
+Select any pawn, right click where you want the task to be done, and no more "Not assigned to ____"
+
+Note: If the pawn is incapable of hauling/cleaning due to their backstory this mod will still enforce that.
+		</description>
+	</ModMetaData>
