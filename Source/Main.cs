@@ -14,13 +14,24 @@ namespace ForceDoJob
             var harmony = HarmonyInstance.Create("com.forcedojob.rimworld.mod");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            Log.Message("Force Do Job: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor");
+            Log.Message("ForceDoJob: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor");
+            Log.Message("ForceDoJob: Adding Harmony Postfix to FloatMenuMakerMap.ChoicesAtFor");
         }
     }
 
     [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
     static class Patch_FloatMenuMakerMap_ChoicesAtFor
     {
+        private static FieldInfo pfi = null;
+        private static void SetPriority(Pawn_WorkSettings workSettings, WorkTypeDef workTypeDef, int priority)
+        {
+            if (pfi == null)
+            {
+                pfi = typeof(Pawn_WorkSettings).GetField("priorities", BindingFlags.Instance | BindingFlags.NonPublic);
+            }
+            ((DefMap<WorkTypeDef, int>)pfi.GetValue(workSettings))[workTypeDef] = priority;
+        }
+
         static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
         {
             __state = new List<Pair<WorkTypeDef, int>>();
@@ -29,8 +40,7 @@ namespace ForceDoJob
                 if (!pawn.story.WorkTypeIsDisabled(def))
                 {
                     __state.Add(new Pair<WorkTypeDef, int> (def, pawn.workSettings.GetPriority(def)));
-                    pawn.workSettings.SetPriority(def, 3);
-
+                    SetPriority(pawn.workSettings, def, 3);
                 }
             }
         }
@@ -38,7 +48,7 @@ namespace ForceDoJob
         {
             foreach (Pair<WorkTypeDef, int> p in __state)
             {
-                pawn.workSettings.SetPriority(p.First, p.Second);
+                SetPriority(pawn.workSettings, p.First, p.Second);
             }
             __state.Clear();
         }
