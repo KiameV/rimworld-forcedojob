@@ -1,8 +1,11 @@
-﻿using Harmony;
+using System;
+using Harmony;
 using RimWorld;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Verse;
+using WorkTab;
 
 namespace ForceDoJob
 {
@@ -19,36 +22,78 @@ namespace ForceDoJob
         }
     }
 
+    [StaticConstructorOnStartup]
     [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
     static class Patch_FloatMenuMakerMap_ChoicesAtFor
     {
-        private static FieldInfo pfi = null;
+        static Patch_FloatMenuMakerMap_ChoicesAtFor()
+        {
+            pfi = typeof(Pawn_WorkSettings).GetField("priorities", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            try
+            {
+                //Need a wrapper method/lambda to be able to catch the TypeLoadException when WorkTab isn't present
+                //All credits for this black magic go to Zhentar (https://github.com/Zhentar/ZhentarTweaks/blob/3da46894781c851b2260a8ef7933665a5e03436b/Source/LetterStackDetour.cs)
+                ((Action) (() =>
+                {
+                    // access worktab to force an error
+                    var test = MainTabWindow_WorkTab.Instance;
+
+                    PrioritySetter = (pawn, def, priority) => pawn.SetPriority(def as WorkGiverDef, priority, null);
+                    PriorityGetter = (pawn, def) => pawn.GetPriority(def as WorkGiverDef, -1);
+                    DisabledGetter = (pawn, def) => pawn.story.WorkTypeIsDisabled((def as WorkGiverDef).workType);
+                }))();
+
+                Log.Message("ForceDoJob: WorkTab detected, using compatibility mode.");
+                useWorkTab = true;
+            }
+            catch (TypeLoadException)
+            {
+                PrioritySetter = (pawn, def, priority) => SetPriority(pawn.workSettings, def as WorkTypeDef, priority);
+                PriorityGetter = (pawn, def) => pawn.workSettings.GetPriority(def as WorkTypeDef);
+                DisabledGetter = (pawn, def) => pawn.story.WorkTypeIsDisabled(def as WorkTypeDef);
+
+#if DEBUG
+                Log.Message("ForceDoJob: using vanilla priority getter/setter.");
+#endif
+            }
+        }
+
+        private static FieldInfo pfi;
+        private static bool useWorkTab;
+
         private static void SetPriority(Pawn_WorkSettings workSettings, WorkTypeDef workTypeDef, int priority)
         {
-            if (pfi == null)
-            {
-                pfi = typeof(Pawn_WorkSettings).GetField("priorities", BindingFlags.Instance | BindingFlags.NonPublic);
-            }
             ((DefMap<WorkTypeDef, int>)pfi.GetValue(workSettings))[workTypeDef] = priority;
         }
 
-        static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
+        internal static Action<Pawn, Def, int> PrioritySetter;
+        internal static Func<Pawn, Def, int> PriorityGetter;
+        internal static Func<Pawn, Def, bool> DisabledGetter;
+
+        static void Prefix(Pawn pawn, ref List<Pair<Def, int>> __state)
         {
-            __state = new List<Pair<WorkTypeDef, int>>();
-            foreach (WorkTypeDef def in DefDatabase<WorkTypeDef>.AllDefsListForReading)
+            __state = new List<Pair<Def, int>>();
+
+            // we have to use workgivers for worktab compatibility, worktypes suffice for vanilla.
+            List<Def> defs = useWorkTab
+                ? DefDatabase<WorkGiverDef>.AllDefsListForReading.Cast<Def>().ToList()
+                : DefDatabase<WorkTypeDef>.AllDefsListForReading.Cast<Def>().ToList();
+
+            foreach (var def in defs)
             {
-                if (!pawn.story.WorkTypeIsDisabled(def))
+                if (!DisabledGetter(pawn, def))
                 {
-                    __state.Add(new Pair<WorkTypeDef, int> (def, pawn.workSettings.GetPriority(def)));
-                    SetPriority(pawn.workSettings, def, 3);
+                    __state.Add(new Pair<Def, int>(def, PriorityGetter(pawn, def)));
+                    PrioritySetter(pawn, def, 3);
                 }
             }
         }
-        static void Postfix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
+        static void Postfix(Pawn pawn, ref List<Pair<Def, int>> __state)
         {
-            foreach (Pair<WorkTypeDef, int> p in __state)
+            foreach (Pair<Def, int> p in __state)
             {
-                SetPriority(pawn.workSettings, p.First, p.Second);
+                PrioritySetter(pawn, p.First, p.Second);
             }
             __state.Clear();
         }
