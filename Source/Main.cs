@@ -9,16 +9,49 @@ namespace ForceDoJob
     [StaticConstructorOnStartup]
     class Main
     {
+        public static Pawn ChoicesForPawn = null;
+
         static Main()
         {
             var harmony = HarmonyInstance.Create("com.forcedojob.rimworld.mod");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            Log.Message("ForceDoJob: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor");
-            Log.Message("ForceDoJob: Adding Harmony Postfix to FloatMenuMakerMap.ChoicesAtFor");
+            Log.Message("ForceDoJob: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor - not blocking");
+            Log.Message("ForceDoJob: Adding Harmony Postfix to FloatMenuMakerMap.ChoicesAtFor - must not be blocked otherwise all work assignments will be set to 3");
+            Log.Message("ForceDoJob: Adding Harmony Prefix to Pawn_WorkSettings.GetPriority - will block in the case of user right click for pawn actions");
         }
     }
 
+    [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
+    static class Patch_FloatMenuMakerMap_ChoicesAtFor
+    {
+        static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
+        {
+            Main.ChoicesForPawn = pawn;
+        }
+
+        static void Postfix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
+        {
+            Main.ChoicesForPawn = null;
+        }
+    }
+
+    [HarmonyPatch(typeof(Pawn_WorkSettings), "GetPriority")]
+    static class Patch_Pawn_WorkSettings_GetPriority
+    {
+        static bool Prefix(ref int __result, WorkTypeDef w)
+        {
+            if (Main.ChoicesForPawn != null &&
+                !Main.ChoicesForPawn.story.WorkTypeIsDisabled(w))
+            {
+                __result = 3;
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /* Old Version
     [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
     static class Patch_FloatMenuMakerMap_ChoicesAtFor
     {
@@ -53,5 +86,5 @@ namespace ForceDoJob
             }
             __state.Clear();
         }
-    }
+    }*/
 }
