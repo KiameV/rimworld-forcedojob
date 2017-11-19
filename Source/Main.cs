@@ -18,7 +18,7 @@ namespace ForceDoJob
 
             Log.Message("ForceDoJob: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor - not blocking");
             Log.Message("ForceDoJob: Adding Harmony Postfix to FloatMenuMakerMap.ChoicesAtFor - must not be blocked otherwise all work assignments will be set to 3");
-            Log.Message("ForceDoJob: Adding Harmony Prefix to Pawn_WorkSettings.GetPriority - will block in the case of user right click for pawn actions");
+            Log.Message("ForceDoJob: Adding Harmony Prefix[HarmonyBefore(\"fluffy.worktab\")] to Pawn_WorkSettings.GetPriority - will block in the case of user right click for pawn actions");
         }
     }
 
@@ -39,6 +39,7 @@ namespace ForceDoJob
     [HarmonyPatch(typeof(Pawn_WorkSettings), "GetPriority")]
     static class Patch_Pawn_WorkSettings_GetPriority
     {
+        [HarmonyBefore("fluffy.worktab")]
         static bool Prefix(ref int __result, WorkTypeDef w)
         {
             if (Main.ChoicesForPawn != null &&
