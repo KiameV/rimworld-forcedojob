@@ -17,6 +17,7 @@ namespace ForceDoJob
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             Log.Message("ForceDoJob: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor - not blocking");
+            Log.Message("ForceDoJob: Adding Harmony Prefix to Pawn_PlayerSettings.EffectiveAreaRestrictionInPawnCurrentMap { get; } - blocking if set in settings");
             Log.Message("ForceDoJob: Adding Harmony Postfix to FloatMenuMakerMap.ChoicesAtFor - must not be blocked otherwise all work assignments will be set to 3");
             Log.Message("ForceDoJob: Adding Harmony Prefix[HarmonyBefore(\"fluffy.worktab\")] to Pawn_WorkSettings.GetPriority - will block in the case of user right click for pawn actions");
         }
@@ -25,14 +26,31 @@ namespace ForceDoJob
     [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
     static class Patch_FloatMenuMakerMap_ChoicesAtFor
     {
+        [HarmonyPriority(Priority.HigherThanNormal)]
         static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
         {
             Main.ChoicesForPawn = pawn;
         }
 
+        [HarmonyPriority(Priority.HigherThanNormal)]
         static void Postfix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
         {
             Main.ChoicesForPawn = null;
+        }
+    }
+
+    [HarmonyPatch(typeof(Pawn_PlayerSettings), "get_EffectiveAreaRestrictionInPawnCurrentMap")]
+    static class Patch_Pawn_PlayerSettings_EffectiveAreaRestrictionInPawnCurrentMap
+    {
+        [HarmonyPriority(Priority.HigherThanNormal)]
+        static bool Prefix(ref Area __result)
+        {
+            if (Settings.AllowOutsideAllowedArea && Main.ChoicesForPawn != null)
+            {
+                __result = null;
+                return false;
+            }
+            return true;
         }
     }
 
@@ -42,11 +60,14 @@ namespace ForceDoJob
         [HarmonyBefore("fluffy.worktab")]
         static bool Prefix(ref int __result, WorkTypeDef w)
         {
-            if (Main.ChoicesForPawn != null &&
-                !Main.ChoicesForPawn.story.WorkTypeIsDisabled(w))
+            if (Main.ChoicesForPawn != null)
             {
-                __result = 3;
-                return false;
+                if (Settings.AllowPawnsToDoAllJobs ||
+                    !Main.ChoicesForPawn.story.WorkTypeIsDisabled(w))
+                {
+                    __result = 3;
+                    return false;
+                }
             }
             return true;
         }
