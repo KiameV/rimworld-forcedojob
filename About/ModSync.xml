@@ -2,7 +2,7 @@
 <ModSyncNinjaData>
   <ID>31a90ce9-6744-4c1d-a53f-a5cab7674eb0</ID>
   <ModName>Force Do Job</ModName>
-  <Version>0.18.2.0</Version>
+  <Version>1.0.0.1</Version>
   <SaveBreaking>False</SaveBreaking>
   <Host name="Github">
     <Owner>KiameV</Owner>

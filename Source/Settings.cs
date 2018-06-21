@@ -41,8 +41,11 @@ namespace ForceDoJob
 
         public static void DoSettingsWindowContents(Rect rect)
         {
-            Listing_Standard l = new Listing_Standard(GameFont.Small);
-            l.ColumnWidth = System.Math.Min(400, rect.width / 2);
+            Listing_Standard l = new Listing_Standard(GameFont.Small)
+            {
+                ColumnWidth = System.Math.Min(400, rect.width / 2)
+            };
+
             l.Begin(rect);
             l.CheckboxLabeled("Allow Orders Outside Allowed Area", ref AllowOutsideAllowedArea);
             l.CheckboxLabeled("Allow All Pawns To Do All Jobs (when manually told)", ref AllowPawnsToDoAllJobs);

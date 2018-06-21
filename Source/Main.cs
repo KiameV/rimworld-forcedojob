@@ -1,5 +1,6 @@
 ﻿using Harmony;
 using RimWorld;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Verse;
@@ -16,10 +17,14 @@ namespace ForceDoJob
             var harmony = HarmonyInstance.Create("com.forcedojob.rimworld.mod");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            Log.Message("ForceDoJob: Adding Harmony Prefix to FloatMenuMakerMap.ChoicesAtFor - not blocking");
-            Log.Message("ForceDoJob: Adding Harmony Prefix to Pawn_PlayerSettings.EffectiveAreaRestrictionInPawnCurrentMap { get; } - blocking if set in settings");
-            Log.Message("ForceDoJob: Adding Harmony Postfix to FloatMenuMakerMap.ChoicesAtFor - must not be blocked otherwise all work assignments will be set to 3");
-            Log.Message("ForceDoJob: Adding Harmony Prefix[HarmonyBefore(\"fluffy.worktab\")] to Pawn_WorkSettings.GetPriority - will block in the case of user right click for pawn actions");
+            Log.Message(
+                "ForceDoJob Harmony Patches:" + Environment.NewLine +
+                "  Prefix:" + Environment.NewLine +
+                "    FloatMenuMakerMap.ChoicesAtFor  - not blocking" + Environment.NewLine +
+                "    Pawn_PlayerSettings.EffectiveAreaRestrictionInPawnCurrentMap { get; } - blocking if set in settings" + Environment.NewLine +
+                "    Pawn_WorkSettings.GetPriority - will block in the case of user right click for pawn actions [HarmonyBefore(\"fluffy.worktab\")]" + Environment.NewLine +
+                "  Postfix:" + Environment.NewLine +
+                "    FloatMenuMakerMap.ChoicesAtFor - must not be blocked otherwise all work assignments will be set to 3");
         }
     }
 
