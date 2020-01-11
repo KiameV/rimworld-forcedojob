@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Verse;
+using Verse.AI;
+
 
 namespace ForceDoJob
 {
@@ -11,6 +13,7 @@ namespace ForceDoJob
     class Main
     {
         public static Pawn ChoicesForPawn = null;
+        public static bool WithinGetPriority = false;
 
         static Main()
         {
@@ -32,13 +35,14 @@ namespace ForceDoJob
     static class Patch_FloatMenuMakerMap_ChoicesAtFor
     {
         [HarmonyPriority(Priority.HigherThanNormal)]
-        static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
+        static void Prefix(Pawn pawn)
         {
             Main.ChoicesForPawn = pawn;
+            pawn.playerSettings.selfTend = Settings.AllowPawnsToDoAllJobs || !Main.ChoicesForPawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor);
         }
 
         [HarmonyPriority(Priority.HigherThanNormal)]
-        static void Postfix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
+        static void Postfix(Pawn pawn)
         {
             Main.ChoicesForPawn = null;
         }
@@ -74,44 +78,13 @@ namespace ForceDoJob
                     return false;
                 }
             }
+            Main.WithinGetPriority = true;
             return true;
         }
+
+        static void Postfix(ref int __result, WorkTypeDef w)
+        {
+            Main.WithinGetPriority = false;
+        }
     }
-
-    /* Old Version
-    [HarmonyPatch(typeof(FloatMenuMakerMap), "ChoicesAtFor")]
-    static class Patch_FloatMenuMakerMap_ChoicesAtFor
-    {
-        private static FieldInfo pfi = null;
-        private static void SetPriority(Pawn_WorkSettings workSettings, WorkTypeDef workTypeDef, int priority)
-        {
-            if (pfi == null)
-            {
-                pfi = typeof(Pawn_WorkSettings).GetField("priorities", BindingFlags.Instance | BindingFlags.NonPublic);
-            }
-            ((DefMap<WorkTypeDef, int>)pfi.GetValue(workSettings))[workTypeDef] = priority;
-        }
-
-        static void Prefix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
-        {
-            __state = new List<Pair<WorkTypeDef, int>>();
-            foreach (WorkTypeDef def in DefDatabase<WorkTypeDef>.AllDefsListForReading)
-            {
-                if (!pawn.story.WorkTypeIsDisabled(def))
-                {
-                    __state.Add(new Pair<WorkTypeDef, int>(def, pawn.workSettings.GetPriority(def)));
-                    SetPriority(pawn.workSettings, def, 3);
-                }
-            }
-        }
-
-        static void Postfix(Pawn pawn, ref List<Pair<WorkTypeDef, int>> __state)
-        {
-            foreach (Pair<WorkTypeDef, int> p in __state)
-            {
-                SetPriority(pawn.workSettings, p.First, p.Second);
-            }
-            __state.Clear();
-        }
-    }*/
 }
