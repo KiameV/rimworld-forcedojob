@@ -38,7 +38,7 @@ namespace ForceDoJob
         static void Prefix(Pawn pawn)
         {
             Main.ChoicesForPawn = pawn;
-            pawn.playerSettings.selfTend = Settings.AllowPawnsToDoAllJobs || !Main.ChoicesForPawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor);
+            pawn.playerSettings.selfTend = Settings.AllowPawnsToDoAllJobs || (Main.ChoicesForPawn != null && Main.ChoicesForPawn.story != null && !Main.ChoicesForPawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor));
         }
 
         [HarmonyPriority(Priority.HigherThanNormal)]
@@ -72,7 +72,7 @@ namespace ForceDoJob
             if (Main.ChoicesForPawn != null)
             {
                 if (Settings.AllowPawnsToDoAllJobs ||
-                    !Main.ChoicesForPawn.story.WorkTypeIsDisabled(w))
+                    (Main.ChoicesForPawn != null && Main.ChoicesForPawn.story != null && !Main.ChoicesForPawn.story.WorkTypeIsDisabled(w)))
                 {
                     __result = 3;
                     return false;

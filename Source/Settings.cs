@@ -29,6 +29,7 @@ namespace ForceDoJob
     public class Settings : ModSettings
     {
         public static bool AllowOutsideAllowedArea = true;
+        public static bool AllowPawnsToSelfTend = false;
         public static bool AllowPawnsToDoAllJobs = false;
 
         public override void ExposeData()
@@ -36,6 +37,7 @@ namespace ForceDoJob
             base.ExposeData();
 
             Scribe_Values.Look<bool>(ref AllowOutsideAllowedArea, "ForceDoJob.AllowOutsideAllowedArea", true, false);
+            Scribe_Values.Look<bool>(ref AllowPawnsToSelfTend, "ForceDoJob.AllowPawnsToSelfTend", false, false);
             Scribe_Values.Look<bool>(ref AllowPawnsToDoAllJobs, "ForceDoJob.AllowPawnsToDoAllJobs", false, false);
         }
 
@@ -48,8 +50,8 @@ namespace ForceDoJob
 
             l.Begin(rect);
             l.CheckboxLabeled("Allow Orders Outside Allowed Area", ref AllowOutsideAllowedArea);
+            l.CheckboxLabeled("Allow Force Pawns to Self Tend", ref AllowPawnsToSelfTend);
             l.CheckboxLabeled("Allow All Pawns To Do All Jobs (when manually told)", ref AllowPawnsToDoAllJobs);
-            //l.Gap(8);
             l.End();
         }
     }
