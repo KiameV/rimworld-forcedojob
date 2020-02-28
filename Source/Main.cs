@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using RimWorld;
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ namespace ForceDoJob
 
         static Main()
         {
-            var harmony = HarmonyInstance.Create("com.forcedojob.rimworld.mod");
+            var harmony = new Harmony("com.forcedojob.rimworld.mod");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             Log.Message(
@@ -38,7 +38,10 @@ namespace ForceDoJob
         static void Prefix(Pawn pawn)
         {
             Main.ChoicesForPawn = pawn;
-            pawn.playerSettings.selfTend = Settings.AllowPawnsToDoAllJobs || (Main.ChoicesForPawn != null && Main.ChoicesForPawn.story != null && !Main.ChoicesForPawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor));
+            if (pawn.playerSettings.selfTend == false && Settings.AllowPawnsToSelfTend)
+            {
+                pawn.playerSettings.selfTend = Settings.AllowPawnsToDoAllJobs || (Main.ChoicesForPawn != null && Main.ChoicesForPawn.story != null && !pawn.WorkTypeIsDisabled(WorkTypeDefOf.Doctor));
+            }
         }
 
         [HarmonyPriority(Priority.HigherThanNormal)]
@@ -72,7 +75,7 @@ namespace ForceDoJob
             if (Main.ChoicesForPawn != null)
             {
                 if (Settings.AllowPawnsToDoAllJobs ||
-                    (Main.ChoicesForPawn != null && Main.ChoicesForPawn.story != null && !Main.ChoicesForPawn.story.WorkTypeIsDisabled(w)))
+                    (Main.ChoicesForPawn != null && Main.ChoicesForPawn.story != null && !Main.ChoicesForPawn.WorkTypeIsDisabled(w)))
                 {
                     __result = 3;
                     return false;
