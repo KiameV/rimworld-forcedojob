@@ -1,11 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-	<name>[KV] Force Do Job - 1.1</name>
+	<name>[KV] Force Do Job - 1.2</name>
 	<author>Kiame Vivacity</author>
 	<url>http://steamcommunity.com/sharedfiles/filedetails/?id=937170538</url>
 	<supportedVersions>
 		<li>1.0</li>
 		<li>1.1</li>
+		<li>1.2</li>
 	</supportedVersions>
 	<packageId>forcedojob.kv.rw</packageId>
 	<description>Want a pawn, who's not assigned to hauling, to haul something without having to manually change the assignments for the pawn?
